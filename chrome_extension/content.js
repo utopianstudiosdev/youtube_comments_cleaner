@@ -37,7 +37,7 @@ function togglePopupUI() {
     top: "80px",
     right: "20px",
     width: "340px",
-    height: "430px",
+    height: "450px",
     border: "none",
     zIndex: "999999",
     borderRadius: "16px",

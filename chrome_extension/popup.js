@@ -11,7 +11,7 @@ async function loadState() {
       progressEl.textContent = res.progress.count ?? 0;
 
       if (timeEl && res.progress.time) {
-        timeEl.textContent = "Time: " + res.progress.time;
+        timeEl.textContent = "Time taken: " + res.progress.time;
         triggerTimeAnimation(timeEl);
       }
       triggerCountAnimation(progressEl);
@@ -67,7 +67,7 @@ if (startBtn) {
     // 🔥 RESET HERE
     progressEl.textContent = "0";
     triggerCountAnimation(progressEl);
-    timeEl.textContent = "Time: 0s";
+    timeEl.textContent = "Time taken: 0s";
     triggerTimeAnimation(timeEl);
 
     statusEl.textContent = "Running...";
@@ -141,7 +141,7 @@ chrome.runtime.onMessage.addListener((msg) => {
     }
 
     if (timeEl) {
-      timeEl.textContent = "Time: " + msg.time;
+      timeEl.textContent = "Time taken: " + msg.time;
       triggerTimeAnimation(timeEl);
     }
   }

@@ -378,6 +378,8 @@ select#speed option:hover {
 
 .progress-label {
   display: inline-block;
+  font-weight: bold;
+
 }
 
 .progress-line.animate .progress-label {
@@ -388,6 +390,7 @@ select#speed option:hover {
   margin: 6px 0 0;
   min-height: 1.2em;
   font-size: 0.8rem;
+  font-weight: bold;
   color: var(--muted);
 }
 
