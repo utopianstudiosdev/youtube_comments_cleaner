@@ -314,21 +314,66 @@ select#speed option:hover {
   font-weight: 700;
   color: var(--accent);
   display: inline-block;
-  animation: count-pop 0.35s ease;
 }
 
 @keyframes count-pop {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.25); }
-  60%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(91, 140, 255, 0));
+  }
+  35% {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 14px rgba(91, 140, 255, 0.6));
+  }
+  70% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(91, 140, 255, 0));
+  }
+}
+
+@keyframes count-shine {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scaleX(0.4);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0) scaleX(1);
+  }
 }
 
 .num {
   font-weight: 700;
   color: var(--accent);
   display: inline-block;
-  animation: count-pop 0.35s ease;
+  position: relative;
+}
+
+.num.count-anim {
+  animation: count-pop 0.38s ease;
+}
+
+.num.count-anim::after {
+  animation: count-shine 0.55s ease;
+}
+
+.num::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -4px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(91, 140, 255, 0.95), transparent);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .progress-label {
@@ -346,38 +391,53 @@ select#speed option:hover {
   color: var(--muted);
 }
 
-.time-estimate:not(:empty) {
-  animation: fade-in 0.4s ease;
+.time-estimate.time-anim {
+  animation: time-pop 0.45s ease;
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
+@keyframes time-pop {
+  0% {
+    opacity: 0.2;
+    transform: translateY(4px) scale(0.98);
+    filter: blur(2px);
   }
-  to {
+  55% {
     opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+    text-shadow: 0 0 18px rgba(91, 140, 255, 0.18);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    text-shadow: none;
   }
 }
+
 .status-text {
   margin-top: 6px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--muted);
-  opacity: 0;
-  transform: translateY(4px);
-  animation: status-in 0.4s ease forwards;
+  opacity: 1;
+  transform: none;
+  position: relative;
+  --status-accent: var(--accent);
 }
 
 .status-running {
   color: #5b8cff;
+  --status-accent: #5b8cff;
 }
 
 .status-success {
   color: #4cd964;
+  --status-accent: #4cd964;
 }
 
 .status-error {
   color: #ff6b6b;
+  --status-accent: #ff6b6b;
 }
 
 @keyframes status-in {
@@ -391,11 +451,47 @@ select#speed option:hover {
   }
 }
 
-.time-estimate {
-  margin: 6px 0 0;
-  min-height: 1.2em;
-  font-size: 0.8rem;
-  color: var(--muted);
-  animation: fade-in 0.3s ease;
+.status-text.status-anim {
+  animation: status-in 0.4s ease forwards;
+}
+
+.status-text.status-anim::before {
+  animation: status-underline 0.7s ease;
+}
+
+.status-text::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 20%,
+    var(--status-accent) 50%,
+    rgba(255, 255, 255, 0.15) 80%,
+    transparent 100%
+  );
+  transform: scaleX(0);
+  opacity: 0;
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+@keyframes status-underline {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
 }
 
