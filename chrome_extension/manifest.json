@@ -9,19 +9,33 @@
     "128": "assets/icon128.png"
   },
   "description": "Clean your YouTube comment history",
+
   "permissions": ["scripting", "tabs", "storage"],
+
   "host_permissions": ["https://myactivity.google.com/*"],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
   "action": {
-    "default_popup": "popup.html",
-	"default_icon": {
+    "default_icon": {
       "16": "assets/icon16.png",
       "32": "assets/icon32.png"
     }
   },
+
   "content_scripts": [
     {
       "matches": ["https://myactivity.google.com/*"],
       "js": ["content.js"]
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html", "popup.js", "styles.css", "assets/*"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

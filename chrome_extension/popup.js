@@ -47,30 +47,26 @@ document.getElementById("start").onclick = async () => {
   // 🔥 SAVE keywords for next time
   chrome.storage.local.set({ keywords });
 
-  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  if (!tab.url.includes("myactivity.google.com")) {
-    alert("Open YouTube comment history page first.");
-    return;
-  }
-
-  // reset progress
+ // reset progress
   chrome.storage.local.set({
     progress: { count: 0, time: "starting..." }
   });
 
-  chrome.tabs.sendMessage(tab.id, {
+  chrome.runtime.sendMessage({
     action: "start",
     settings
   });
 };
 
+document.getElementById("closeBtn").onclick = () => {
+  // tell parent page to remove iframe
+  window.parent.postMessage({ type: "close_iframe" }, "*");
+};
 // 🛑 STOP
 document.getElementById("stop").onclick = async () => {
-  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  chrome.tabs.sendMessage(tab.id, { action: "stop" });
-
+  chrome.runtime.sendMessage({ action: "stop" });
   document.getElementById("progress").innerText = "Stopped";
 };
 
