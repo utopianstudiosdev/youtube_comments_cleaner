@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Popup</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="header banner">
+      <img src="assets/icon.png" alt="" class="logo banner-img" width="320" height="96" />
+    </header>
+
+    <div class="form-body">
+      <div class="field">
+        <label for="keyword">Keywords</label>
+        <input id="keyword" type="text" placeholder="crypto, dancing ponies, test" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label for="speed">Speed</label>
+        <div class="select-wrap">
+          <select id="speed">
+            <option value="2000">Slow</option>
+            <option value="1000" selected>Normal</option>
+            <option value="500">Fast</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button type="button" id="start" class="btn btn-primary">Start</button>
+        <button type="button" id="stop" class="btn btn-secondary">Stop</button>
+      </div>
+
+      <div class="status">
+        <p id="progress" class="progress-line"><span class="progress-label">Deleted:</span> <span class="progress-value">0</span></p>
+        <p id="timeEstimate" class="time-estimate"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
