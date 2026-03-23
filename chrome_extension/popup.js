@@ -1,85 +1,102 @@
-// 🔄 Load saved data on popup open
 async function loadState() {
   let res = await chrome.storage.local.get(["progress", "keywords"]);
 
-  // restore progress
-if (res.progress) {
-  document.getElementById("progress").innerText =
-    `Deleted: ${res.progress.count}`;
+  const progressEl = document.getElementById("progressValue");
+  const timeEl = document.getElementById("timeTaken");
+  const statusEl = document.getElementById("statusText");
+  const keywordEl = document.getElementById("keyword");
 
-  // 🔥 hide if still "starting..."
-  if (res.progress.time && res.progress.time !== "starting...") {
-    document.getElementById("timeEstimate").innerText =
-      `Speed: ${res.progress.time}`;
-    document.getElementById("timeEstimate").style.display = "block";
-  } else {
-    document.getElementById("timeEstimate").style.display = "none";
-  }
-}
+  if (res.progress && progressEl) {
+    progressEl.textContent = res.progress.count ?? 0;
 
-  // 🔥 restore last used keywords
-  if (res.keywords) {
-    document.getElementById("keyword").value = res.keywords.join(", ");
+    if (timeEl && res.progress.time) {
+      timeEl.textContent = "Time: " + res.progress.time;
+    }
   }
+
+  if (keywordEl && res.keywords) {
+    keywordEl.value = res.keywords.join(", ");
+  }
+
+  if (statusEl) statusEl.textContent = "";
 }
 
 document.addEventListener("DOMContentLoaded", loadState);
 
-// 🚀 START
+// START
 document.getElementById("start").onclick = async () => {
-  document.getElementById("progress").innerText = "Running...";
-  document.getElementById("progress").classList.add("glow");
+  const progressEl = document.getElementById("progressValue");
+  const timeEl = document.getElementById("timeTaken");
+  const statusEl = document.getElementById("statusText");
 
-  let keywordInput = document.getElementById("keyword")?.value || "";
+  // 🔥 RESET HERE
+  progressEl.textContent = "0";
+  timeEl.textContent = "Time: 0s";
 
-  let keywords = keywordInput
-    .split(",")
-    .map(k => k.trim().toLowerCase())
-    .filter(k => k.length > 0);
+  statusEl.textContent = "Running...";
+  statusEl.className = "status-text status-running";
 
-  let settings = {
+  const keywords = document.getElementById("keyword").value
+      .split(",")
+      .map(k => k.trim().toLowerCase())
+      .filter(Boolean);
+
+  const settings = {
     keywords,
     speed: parseInt(document.getElementById("speed").value) || 1000
   };
 
-  console.log("Sending settings:", settings);
-
-  // 🔥 SAVE keywords for next time
   chrome.storage.local.set({ keywords });
-
-
- // reset progress
-  chrome.storage.local.set({
-    progress: { count: 0, time: "starting..." }
-  });
-
-  chrome.runtime.sendMessage({
-    action: "start",
-    settings
-  });
+  chrome.runtime.sendMessage({ action: "start", settings });
 };
 
+// STOP
+document.getElementById("stop").onclick = () => {
+  chrome.runtime.sendMessage({ action: "stop" });
+
+  const statusEl = document.getElementById("statusText");
+  statusEl.textContent = "Stopped";
+  statusEl.className = "status-text status-error";
+};
+
+// CLOSE
 document.getElementById("closeBtn").onclick = () => {
-  // tell parent page to remove iframe
   window.parent.postMessage({ type: "close_iframe" }, "*");
 };
-// 🛑 STOP
-document.getElementById("stop").onclick = async () => {
 
-  chrome.runtime.sendMessage({ action: "stop" });
-  document.getElementById("progress").innerText = "Stopped";
-};
-
-// 🔄 LIVE UPDATES
+// LISTENER
 chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.type === "progress") {
-    document.getElementById("progress").innerText =
-      `Deleted: ${msg.count}`;
+  const progressEl = document.getElementById("progressValue");
+  const timeEl = document.getElementById("timeTaken");
+  const statusEl = document.getElementById("statusText");
 
-    if (msg.time && msg.time !== "starting...") {
-  document.getElementById("timeEstimate").innerText =
-    `Speed: ${msg.time}`;
-  document.getElementById("timeEstimate").style.display = "block";
-}
+  if (msg.type === "no_comments") {
+    statusEl.textContent = "No comments found";
+    statusEl.className = "status-text status-error";
+    return;
+  }
+
+  if (msg.type === "finished") {
+    statusEl.textContent = `Finished ✅ (${msg.count})`;
+    statusEl.className = "status-text status-success";
+    return;
+  }
+
+  if (msg.type === "progress") {
+    if (progressEl) {
+      progressEl.textContent = msg.count;
+
+      progressEl.classList.remove("num");
+      void progressEl.offsetWidth;
+      progressEl.classList.add("num");
+    }
+
+    if (timeEl) {
+      timeEl.textContent = "Time: " + msg.time;
+
+      timeEl.style.animation = "none";
+      void timeEl.offsetWidth;
+      timeEl.style.animation = "fade-in 0.3s ease";
+    }
   }
 });

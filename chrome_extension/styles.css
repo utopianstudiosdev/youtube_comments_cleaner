@@ -318,15 +318,25 @@ select#speed option:hover {
 }
 
 @keyframes count-pop {
-  0% {
-    transform: scale(1);
-  }
-  40% {
-    transform: scale(1.12);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.25); }
+  60%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.num {
+  font-weight: 700;
+  color: var(--accent);
+  display: inline-block;
+  animation: count-pop 0.35s ease;
+}
+
+.progress-label {
+  display: inline-block;
+}
+
+.progress-line.animate .progress-label {
+  animation: count-pop 0.35s ease;
 }
 
 .time-estimate {
@@ -348,3 +358,44 @@ select#speed option:hover {
     opacity: 1;
   }
 }
+.status-text {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(4px);
+  animation: status-in 0.4s ease forwards;
+}
+
+.status-running {
+  color: #5b8cff;
+}
+
+.status-success {
+  color: #4cd964;
+}
+
+.status-error {
+  color: #ff6b6b;
+}
+
+@keyframes status-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.time-estimate {
+  margin: 6px 0 0;
+  min-height: 1.2em;
+  font-size: 0.8rem;
+  color: var(--muted);
+  animation: fade-in 0.3s ease;
+}
+

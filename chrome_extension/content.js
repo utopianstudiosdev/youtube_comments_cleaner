@@ -4,16 +4,27 @@ let startTime = Date.now();
 let processed = new Set();
 
 const sleep = (time) => new Promise(res => setTimeout(res, time));
+function formatTime(seconds) {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
 
+  return [
+    hrs > 0 ? `${hrs}h` : "",
+    mins > 0 ? `${mins}m` : "",
+    `${secs}s`
+  ].filter(Boolean).join(" ");
+}
 /* =========================
    UI: TOGGLE IFRAME PANEL
 ========================= */
+
 
 function togglePopupUI() {
   let existing = document.getElementById("yt-cleaner-frame");
 
   if (existing) {
-    existing.remove(); // CLOSE
+    existing.remove();
     return;
   }
 
@@ -37,24 +48,37 @@ function togglePopupUI() {
 }
 
 /* =========================
-   UI: CLOSE FROM IFRAME
+   PRE-CHECK (NO COMMENTS)
+========================= */
+
+function hasMatchingComments(settings) {
+  let items = getItems();
+
+  for (let item of items) {
+    let text = getText(item);
+
+    if (matchesFilters(text, settings)) {
+      let btn = getDeleteButton(item);
+      if (btn) return true;
+    }
+  }
+
+  return false;
+}
+
+/* =========================
+   UI: CLOSE + ESC
 ========================= */
 
 window.addEventListener("message", (event) => {
   if (event.data?.type === "close_iframe") {
-    let frame = document.getElementById("yt-cleaner-frame");
-    if (frame) frame.remove();
+    document.getElementById("yt-cleaner-frame")?.remove();
   }
 });
 
-/* =========================
-   UI: ESC TO CLOSE
-========================= */
-
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    let frame = document.getElementById("yt-cleaner-frame");
-    if (frame) frame.remove();
+    document.getElementById("yt-cleaner-frame")?.remove();
   }
 });
 
@@ -62,7 +86,7 @@ document.addEventListener("keydown", (e) => {
    MESSAGE HANDLING
 ========================= */
 
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener(async (msg) => {
   if (msg.action === "toggle_ui") {
     togglePopupUI();
   }
@@ -71,6 +95,15 @@ chrome.runtime.onMessage.addListener((msg) => {
     deletedCount = 0;
     processed.clear();
     startTime = Date.now();
+
+    // 🔥 Load more before checking (prevents false "no comments")
+    await loadMoreComments();
+
+    if (!hasMatchingComments(msg.settings)) {
+      chrome.runtime.sendMessage({ type: "no_comments" });
+      return;
+    }
+
     run(msg.settings);
   }
 
@@ -80,7 +113,7 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 /* =========================
-   CORE LOGIC (UNCHANGED)
+   CORE LOGIC
 ========================= */
 
 // Get items
@@ -139,11 +172,10 @@ async function handleConfirmIfExists() {
 // Progress
 function updateProgress() {
   let elapsed = (Date.now() - startTime) / 1000;
-  let rate = deletedCount / elapsed || 1;
 
   let data = {
     count: deletedCount,
-    time: `${(1 / rate).toFixed(1)} sec/item`
+    time: formatTime(elapsed)
   };
 
   chrome.storage.local.set({ progress: data });
@@ -171,14 +203,16 @@ async function loadMoreComments() {
   }
 }
 
-// Core worker
+/* =========================
+   WORK (SMART DETECTION)
+========================= */
+
 async function work(settings) {
   let items = getItems();
-
-  console.log("Keywords:", settings?.keywords);
+  let didWork = false;
 
   for (let item of items) {
-    if (!running) return;
+    if (!running) return { didWork: false, newContentLoaded: false };
 
     try {
       let id = item.innerText.slice(0, 80);
@@ -193,9 +227,17 @@ async function work(settings) {
 
       btn.click();
 
+      btn.click();
+
+      await sleep(settings.speed || 1000);
+      await handleConfirmIfExists();
+
+// ✅ increment AFTER confirm
       deletedCount++;
       processed.add(id);
       updateProgress();
+
+      didWork = true;
 
       await sleep(settings.speed || 1000);
       await handleConfirmIfExists();
@@ -203,21 +245,51 @@ async function work(settings) {
     } catch (err) {
       console.error(err);
       running = false;
-      return;
+      return { didWork: false, newContentLoaded: false };
     }
   }
 
+  // 🔥 Detect new content after scroll
+  let prevHeight = document.body.scrollHeight;
+
   await loadMoreComments();
+
+  let newHeight = document.body.scrollHeight;
+
+  return {
+    didWork,
+    newContentLoaded: newHeight > prevHeight
+  };
 }
 
-// Main loop
+/* =========================
+   MAIN LOOP (BULLETPROOF)
+========================= */
+
 async function run(settings) {
   running = true;
 
   console.log("START:", settings);
 
   while (running) {
-    await work(settings);
+    let result = await work(settings);
+
+    let didWork = result.didWork;
+    let newContentLoaded = result.newContentLoaded;
+
+    // 🔥 PERFECT STOP CONDITION
+    if (!didWork && !newContentLoaded) {
+      running = false;
+
+      chrome.runtime.sendMessage({
+        type: "finished",
+        count: deletedCount
+      });
+
+      console.log("No more comments. Stopping.");
+      break;
+    }
+
     await sleep(1000);
   }
 }
